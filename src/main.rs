@@ -42,6 +42,17 @@ impl Polynomial {
             + 1.0;
         max(min(x * ret, 1.0), 0.0)
     }
+    
+    pub fn mutate(&self) -> Self {
+        let mut rng = rand::thread_rng();
+        let coeffecient = self.coeffecient.clone()
+            .into_iter()
+            .map(|c| c + (2.0 * rng.gen::<f64>() * 2.0 - 1.0))
+            .collect();
+        Self {
+            coeffecient,
+        }
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -67,6 +78,13 @@ impl Gene {
         Gene {
             value: self.value + 0.01,
             death_prob: self.death_prob.clone(),
+        }
+    }
+    
+    pub fn next_generation(&self) -> Self {
+        Self {
+            value: 0.0,
+            death_prob: self.death_prob.mutate()
         }
     }
 }
@@ -102,6 +120,17 @@ impl Animal {
             .into_iter()
             .fold(false, |acc, gene| gene.is_dead() || acc)
     }
+
+    pub fn next_generation(&self) -> Self {
+        let genes = self.genes.clone()
+            .into_iter()
+            .map(|gene| gene.next_generation())
+            .collect();
+
+        Animal {
+            genes,
+        }
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -130,6 +159,16 @@ impl World {
             animals,
         }
     }
+    
+    pub fn next_generation(&self) -> Self {
+        let animals = self.animals.clone()
+            .into_iter()
+            .map(|animal| animal.next_generation())
+            .collect();
+        World {
+            animals,
+        }
+    }
 }
 
 fn main() {
@@ -139,5 +178,5 @@ fn main() {
         println!("{}, {}", i, a.eval((i as f64) / 100.0));
     }
     */
-    World::new(100).next_month();
+    World::new(100).next_month().next_generation();
 }
