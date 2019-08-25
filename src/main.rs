@@ -58,7 +58,6 @@ impl Polynomial {
 #[derive(Clone, Debug)]
 struct Gene {
     death_prob: Polynomial,
-    value: f64,
 }
 
 impl Gene {
@@ -66,24 +65,21 @@ impl Gene {
         //let mut rng = rand::thread_rng();
         Gene {
             death_prob: Polynomial::new(),
-            value: 0.0,
         }
     }
     
-    pub fn is_dead(&self) -> bool {
-        self.death_prob.eval(self.value) >= 1.0
+    pub fn is_dead(&self, age: f64) -> bool {
+        self.death_prob.eval(age) >= 1.0
     }
     
     pub fn next_month(&self) -> Self {
         Gene {
-            value: self.value + 0.01,
             death_prob: self.death_prob.clone(),
         }
     }
     
     pub fn next_generation(&self) -> Self {
         Self {
-            value: 0.0,
             death_prob: self.death_prob.mutate()
         }
     }
@@ -92,6 +88,7 @@ impl Gene {
 #[derive(Clone, Debug)]
 struct Animal {
     genes: Vec<Gene>,
+    age: f64,
 }
 
 impl Animal {
@@ -101,6 +98,7 @@ impl Animal {
             genes.push(Gene::new());
         }
         Animal { 
+            age: 0.0,
             genes, 
         }
     }
@@ -111,6 +109,7 @@ impl Animal {
             .map(|gene| gene.next_month())
             .collect();
         Animal {
+            age: self.age + 0.01,
             genes,
         }
     }
@@ -118,7 +117,7 @@ impl Animal {
     pub fn is_dead(&self) -> bool {
         self.genes.clone()
             .into_iter()
-            .fold(false, |acc, gene| gene.is_dead() || acc)
+            .fold(false, |acc, gene| gene.is_dead(self.age) || acc)
     }
 
     pub fn next_generation(&self) -> Self {
@@ -128,6 +127,7 @@ impl Animal {
             .collect();
 
         Animal {
+            age: 0.0,
             genes,
         }
     }
