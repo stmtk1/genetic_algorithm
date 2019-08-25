@@ -52,15 +52,22 @@ struct Gene {
 
 impl Gene {
     pub fn new() -> Self {
-        let mut rng = rand::thread_rng();
+        //let mut rng = rand::thread_rng();
         Gene {
             death_prob: Polynomial::new(),
-            value: rng.gen::<f64>(),
+            value: 0.0,
         }
     }
     
-    pub fn is_dead(&self) -> f64 {
-        self.death_prob.eval(self.value)
+    pub fn is_dead(&self) -> bool {
+        self.death_prob.eval(self.value) >= 1.0
+    }
+    
+    pub fn next_month(&self) -> Self {
+        Gene {
+            value: self.value + 0.01,
+            death_prob: self.death_prob.clone(),
+        }
     }
 }
 
@@ -79,6 +86,22 @@ impl Animal {
             genes, 
         }
     }
+
+    pub fn next_month(&self) -> Self {
+        let genes = self.genes.clone()
+            .into_iter()
+            .map(|gene| gene.next_month())
+            .collect();
+        Animal {
+            genes,
+        }
+    }
+    
+    pub fn is_dead(&self) -> bool {
+        self.genes.clone()
+            .into_iter()
+            .fold(false, |acc, gene| gene.is_dead() || acc)
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -96,6 +119,17 @@ impl World {
             animals,
         }
     }
+    
+    pub fn next_month(&self) -> Self {
+        let animals = self.animals.clone()
+            .into_iter()
+            .filter(|animal| animal.is_dead())
+            .map(|animal| animal.next_month())
+            .collect();
+        World {
+            animals,
+        }
+    }
 }
 
 fn main() {
@@ -105,5 +139,5 @@ fn main() {
         println!("{}, {}", i, a.eval((i as f64) / 100.0));
     }
     */
-    World::new(100);
+    World::new(100).next_month();
 }
